@@ -1,6 +1,6 @@
 import * as esprima from 'esprima';
 import * as escodegen from 'escodegen';
-export {convert};
+export {convert,unary_expression_handler,exchange,handle_array};
 
 let args_strings;
 let globals;
@@ -22,11 +22,11 @@ const convert = (codeToConvert,args) => {
     for(i=0 ; i< args_val.length ; i++) {
         if(args_val[i]=='')
             break;
-        let tmp=(esprima.parseScript(args_val[i],{loc: true}))['body'][0];
+        let tmp=(esprima.parseScript(args_val[i]))['body'][0];
         tmp_arr.push(tmp['expression']);
     }
     args_val=tmp_arr;
-    SymbolicSubstitution((esprima.parseScript(codeToConvert,{loc: true})),[],-1,program_flow);
+    SymbolicSubstitution((esprima.parseScript(codeToConvert)),[],-1,program_flow);
     return program_flow;
 };
 
@@ -83,7 +83,7 @@ function my_eval(obj){
         }
     }
     let evaluated = eval(str);
-    obj = esprima.parseScript(evaluated.toString(),{loc: true});
+    obj = esprima.parseScript(evaluated.toString());
     obj=obj['body'][0]['expression'];
     return obj;
 }
@@ -104,7 +104,7 @@ const replace_args = (obj,env) => {
 
     }
     if(updated)
-        obj=esprima.parseScript(str,{loc: true})['body'][0];
+        obj=esprima.parseScript(str)['body'][0];
 
     return obj;
 };
@@ -228,7 +228,7 @@ function update_expression_handler(obj,env,idx,arr){
     arr.push({string:str});
     let name = escodegen.generate(obj['argument']);
     obj['argument'] = simpleSymbolicSubstitution(obj['argument'],env,idx,arr);
-    update(env,idx,name,esprima.parseScript(escodegen.generate(obj['argument'])+obj['operator'][0]+'1',{loc: true})['body'][0]['expression']);
+    update(env,idx,name,esprima.parseScript(escodegen.generate(obj['argument'])+obj['operator'][0]+'1')['body'][0]['expression']);
     return obj;
 }
 
@@ -257,7 +257,7 @@ function member_expression_handler(obj,env,idx){
     for(i=0;i<env.length;i++) {
         if (env[i]['var'] == name && !(args_strings.includes(env[i]['var']))){
             let evaluated = eval(escodegen.generate(env[i]['val'])+rest);
-            obj=esprima.parseScript(evaluated.toString(),{loc: true});
+            obj=esprima.parseScript(evaluated.toString());
             obj=obj['body'][0]['expression'];
             break;
         }
